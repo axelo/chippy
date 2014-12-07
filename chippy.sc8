@@ -5,43 +5,40 @@ align off
 high
 
 ; game_intro
+	call draw_intro
+	ld v0, k	; Wait for keypress
 
-call draw_intro
-ld v0, k	; Wait for keypress
-
-ld v7, 0 ; Highest sore this run
+	ld v7, 0 ; Highest score this run
 
 game_reset:
+	ld ve, 6 ; Current pipe sprite
+	ld vd, 0 ; Top pipe length, 0..12
+	ld vc, 20 ; Space between pipes 
+	ld vb, -2 & #ff ; Player score
 
-ld ve, 6 ; Current pipe sprite
-ld vd, 0 ; Top pipe length, 0..12
-ld vc, 20 ; Space between pipes 
-ld vb, -2 & #ff ; Player score
+	ld va, 16 ; Chippy y
+	ld v9, 0 ; Chippy speed
+	ld v8, 0 ; Game over
 
-ld va, 16 ; Chippy y
-ld v9, 0 ; Chippy speed
-ld v8, 0 ; Game over
-
-cls
+	cls
 
 ; game get ready
+	call draw_get_ready
+	call draw_score
 
-call draw_get_ready
-call draw_score
+	call draw_chippy
 
-call draw_chippy
+	ld v9, 1
+	ld v6, 1
 
-ld v9, 1
-ld v6, 1
-
-game_get_ready:
+game_get_ready_loop:
 	ld v0, #0
 	sknp v0
 	jp game_start
 
 	ld v0, dt
 	se v0, 0
-	jp game_get_ready
+	jp game_get_ready_loop
 
 	call draw_chippy ; Clear chippy
 	add va, v9
@@ -53,7 +50,7 @@ game_get_ready:
 
 	add v6, -1 & #ff
 	se v6, 0
-	jp game_get_ready
+	jp game_get_ready_loop
 
 	add v9, 1 ; 1 -> 2, -1 > 0
 
@@ -66,15 +63,15 @@ game_get_ready:
 
 	ld v0, 18
 	ld dt, v0
-	jp game_get_ready
+	jp game_get_ready_loop
 
 game_start:
-ld v9, 0
+	ld v9, 0
 
-cls
+	cls
 
-call draw_chippy
-call draw_score
+	call draw_chippy
+	call draw_score
 
 game_loop:
 	call next_pipe
@@ -530,9 +527,7 @@ draw_pipes:
 	ret
 
 scratch:
-dw 0, 0,0,0,0
-; 96x32 => 6x2
-; fz 46
+dw 0, 0, 0, 0, 0, 0, 0, 0 ; 16 bytes scratch mem
 
 include sprites.sc8
 
