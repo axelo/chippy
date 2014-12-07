@@ -1,0 +1,538 @@
+option SCHIP11
+option BINARY
+align off
+
+high
+
+; game_intro
+
+call draw_intro
+ld v0, k	; Wait for keypress
+
+ld v7, 0 ; Highest sore this run
+
+game_reset:
+
+ld ve, 6 ; Current pipe sprite
+ld vd, 0 ; Top pipe length, 0..12
+ld vc, 20 ; Space between pipes 
+ld vb, -2 & #ff ; Player score
+
+ld va, 16 ; Chippy y
+ld v9, 0 ; Chippy speed
+ld v8, 0 ; Game over
+
+cls
+
+; game get ready
+
+call draw_get_ready
+call draw_score
+
+call draw_chippy
+
+ld v9, 1
+ld v6, 1
+
+game_get_ready:
+	ld v0, #0
+	sknp v0
+	jp game_start
+
+	ld v0, dt
+	se v0, 0
+	jp game_get_ready
+
+	call draw_chippy ; Clear chippy
+	add va, v9
+	call draw_chippy
+
+	ld v0, v6
+	shl v0
+	ld dt, v0
+
+	add v6, -1 & #ff
+	se v6, 0
+	jp game_get_ready
+
+	add v9, 1 ; 1 -> 2, -1 > 0
+
+	se v9, 0
+	ld v9, -2 & #ff
+
+	add v9, 1
+
+	ld v6, 4
+
+	ld v0, 18
+	ld dt, v0
+	jp game_get_ready
+
+game_start:
+ld v9, 0
+
+cls
+
+call draw_chippy
+call draw_score
+
+game_loop:
+	call next_pipe
+
+	call draw_score ; Clears score
+	call draw_chippy ; Clears chippy
+	
+	call update_score
+	call update_chippy
+
+	scl
+
+	call draw_chippy
+	se vf, 0
+	ld v8, vf	; Store collision, same as game over
+
+	call draw_score
+	call draw_pipes
+
+	sne v8, 0
+	jp game_loop
+
+; game over
+	ld v0, 20
+	ld st, v0
+
+	call update_highscore
+
+	call draw_score ; Clear score
+
+	call draw_game_over
+
+	ld v0, k	; Wait for keypress
+	jp game_reset
+
+next_pipe:
+	add vc, -1 & #ff
+	
+	se vc, 0
+	ret
+
+	ld vc, 20  ; Space until next pipe
+	rnd vd, 15 ; 0..15
+	;ld vd, 12
+	ld ve, -1 & #ff ; Reset pipe sprite
+
+	ret
+
+update_score:
+	sne vc, 14
+	jp increase_score
+	
+	ret
+
+increase_score:
+	add vb, 1
+
+	sne vb, -1 & #ff
+	ret
+	
+	sne vb, 0
+	ret
+
+	ld v0, 4
+	ld st, v0
+
+	ret
+
+update_chippy:
+	ld v0, v9
+	add va, v0
+
+	ld v0, 64-10
+	subn v0, va
+	ld v8, vf	; Out of screen, game over
+
+	se v9, 10
+	add v9, 2
+
+	ld v0, 128
+	subn v0, v9
+	se vf, 0
+	ret
+
+	ld v0, #0
+	sknp v0
+	ld v9, -6 & #ff
+
+	ret
+
+update_highscore:
+	ld v0, vb
+
+	sne vb, -1 & #ff
+	ld v0, 0
+
+	sne vb, -2 & #ff
+	ld v0, 0
+
+	subn v0, v7
+	sne vf, 0
+	ld v7, vb
+	ret
+
+draw_intro:
+ 	; Chippy text
+	ld v0, (128 - 80) / 2
+	ld v1, 2
+
+	ld i, sprite_chippy_text_0_0
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_0_1
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_0_2
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_0_3
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_0_4
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_1_0
+	ld v0, (128 - 80) / 2	
+	add v1, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_1_1
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_1_2
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_1_3
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_chippy_text_1_4
+	add v0, 16
+	drw v0, v1, 0
+
+	; Chippy
+	ld i, sprite_chippy
+	ld v0, 128/2 - 16/2
+	ld v1, 64 - 26
+	drw v0, v1, 0
+
+ 	; Press play text
+	ld v0, (128 - 96) / 2
+	ld v1, 64 - 14
+
+	ld i, sprite_play_text_0_0
+	drw v0, v1, 0
+
+	ld i, sprite_play_text_0_1
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_play_text_0_2
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_play_text_0_3
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_play_text_0_4
+	add v0, 16
+	drw v0, v1, 0
+
+	ld i, sprite_play_text_0_5
+	add v0, 16
+	drw v0, v1, 0
+
+	ret
+
+draw_get_ready:
+	ld v0, (128-80) / 2
+	ld v1, 28
+	ld v2, 28 + 16
+
+	ld i, sprite_get_ready_text_0_0
+	drw v0, v1, 0
+	ld i, sprite_get_ready_text_1_0
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_get_ready_text_0_1
+	drw v0, v1, 0
+	ld i, sprite_get_ready_text_1_1
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_get_ready_text_0_2
+	drw v0, v1, 0
+	ld i, sprite_get_ready_text_1_2
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_get_ready_text_0_3
+	drw v0, v1, 0
+	ld i, sprite_get_ready_text_1_3
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_get_ready_text_0_4
+	drw v0, v1, 0
+	ld i, sprite_get_ready_text_1_4
+	drw v0, v2, 0
+
+ 	; to fly text
+ 	ld v0, (128 - 64) / 2
+ 	ld v1, 64 - 14
+ 	
+ 	ld i, sprite_to_fly_text_0_0
+ 	drw v0, v1, 0
+
+ 	add v0, 16
+
+ 	ld i, sprite_to_fly_text_0_1
+ 	drw v0, v1, 0
+
+ 	add v0, 16
+
+ 	ld i, sprite_to_fly_text_0_2
+ 	drw v0, v1, 0
+
+ 	add v0, 16
+
+ 	ld i, sprite_to_fly_text_0_3
+ 	drw v0, v1, 0
+
+	ret
+
+draw_game_over:
+	; Game over text
+	ld v0, (128-96) / 2
+	ld v1, 2
+	ld v2, 2 + 16
+
+	ld i, sprite_game_over_text_0_0
+	drw v0, v1, 0
+	ld i, sprite_game_over_text_1_0
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_game_over_text_0_1
+	drw v0, v1, 0
+	ld i, sprite_game_over_text_1_1
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_game_over_text_0_2
+	drw v0, v1, 0
+	ld i, sprite_game_over_text_1_2
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_game_over_text_0_3
+	drw v0, v1, 0
+	ld i, sprite_game_over_text_1_3
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_game_over_text_0_4
+	drw v0, v1, 0
+	ld i, sprite_game_over_text_1_4
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_game_over_text_0_5
+	drw v0, v1, 0
+	ld i, sprite_game_over_text_1_5
+	drw v0, v2, 0
+
+	; Score text
+	ld v0, 20
+	ld v1, 30
+	ld v2, 30 + 16
+
+	ld i, sprite_score_text_0_0
+	drw v0, v1, 0
+	ld i, sprite_score_text_1_0
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_score_text_0_1
+	drw v0, v1, 0
+	ld i, sprite_score_text_1_1
+	drw v0, v2, 0
+
+	add v0, 16
+
+	ld i, sprite_score_text_0_2
+	drw v0, v1, 0
+	ld i, sprite_score_text_1_2
+	drw v0, v2, 0
+
+	ld v0, vb
+	sne v0, -1 & #ff
+	ld v0, 0
+
+	sne v0, -2 & #ff
+	ld v0, 0
+
+	ld v3, 90
+	ld v4, 34
+	call draw_number
+
+	ld v0, v7
+	ld v3, 90
+	ld v4, 34+15
+	call draw_number
+
+	ret
+
+draw_number:
+; v0 - number to draw
+; v3 - xpos
+; v4 - ypos
+
+	ld i, scratch
+	ld b, v0
+	ld v2, [i] ; v0..v2 is score
+
+	ld hf, v2
+	drw v3, v4, 10
+
+	add v3, -10 & #ff
+	ld hf, v1
+
+	sne v0, 0
+	se v1, 0
+	drw v3, v4, 10
+
+	add v3, -10 & #ff
+	ld hf, v0
+	
+	se v0, 0
+	drw v3, v4, 10
+
+	ret
+
+draw_score:
+	ld v0, vb
+
+	sne v0, -1 & #ff
+	ld v0, 0
+
+	sne v0, -2 & #ff
+	ld v0, 0
+
+	ld v3, 128 - 10 ; x pos
+	ld v4, 2 ; y pos
+
+	jp draw_number
+
+draw_chippy:
+	ld i, sprite_chippy
+	ld v0, 24
+	drw v0, va, 0
+	
+	ret
+
+draw_pipes:
+	; if sprite is 0 and vc != 0 return
+	se ve, 6
+	jp _draw_next_pipe_sprite
+
+	se vc, 0
+	ret
+
+	_draw_next_pipe_sprite:	
+	add ve, 1
+	sne ve, 7 ; 0..7
+	ld ve, 0
+
+	ld v2, 128-4 ; Always same x, edge of screen
+	ld i, sprite_pipe_fill ; Assume fill sprite
+
+	sne ve, 0
+	ld i, sprite_pipe_left
+
+	sne ve, 6
+	ld i, sprite_pipe_right
+
+	ld v3, vd ; Top pipe start y same as height
+	drw v2, v3, 12
+
+	add v3, 12 + 28
+	drw v2, v3, 12
+	
+
+	sne ve, 0
+	jp _draw_pipe_shaft
+	sne ve, 6
+	jp _draw_pipe_shaft
+	
+	ret
+
+	_draw_pipe_shaft:
+	; pipe shaft top
+	ld v0, #D2
+	ld v1, vd
+	add v1, #30 ; D23[Pipe height 0..15]
+
+	ld i, _draw_pipe_shaft_top
+	ld [i], v1
+
+	; pipe shaft bottom
+	ld v1, 64 - 28 - 12 - 12
+	sub v1, vd ; v1, height of bottom shaft
+	add v1, #30
+	ld v4, vf
+
+	ld i, _draw_pipe_shaft_bottom
+	ld [i], v1 ; D23[Bottom pipe shaft height]
+
+	; draw pipe shafts
+	ld i, sprite_pipe_shaft
+	
+	ld v3, 0
+	se vd, 0 ; Zero top height, skip
+	_draw_pipe_shaft_top: drw v2, v3, 0
+
+	ld v3, vd
+	add v3, 12 + 28 + 12
+	
+	sne v4, 0 ; Negative bottom height, skip
+	ret
+
+	se v1, #30 ; Zero bottom shaft height, skip
+	_draw_pipe_shaft_bottom: drw v2, v3, 0	
+
+	ret
+
+scratch:
+dw 0, 0,0,0,0
+; 96x32 => 6x2
+; fz 46
+
+include sprites.sc8
+

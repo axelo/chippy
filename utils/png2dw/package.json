@@ -1,0 +1,14 @@
+{
+  "name": "png2dw",
+  "version": "1.0.0",
+  "description": "",
+  "main": "png2dw.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "axelo",
+  "license": "ISC",
+  "dependencies": {
+    "png-js": "^0.1.1"
+  }
+}
